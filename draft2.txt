@@ -1,0 +1,41 @@
+        
+		
+        static public void CloseConnectDB()
+        {
+            Processing.dbConnect.Close();
+        }
+
+		
+		
+		public void InsertImpdata(int id, DateTime datec, DateTime daten, int patientid, string nom, string prenom, DateTime patientbd, string keycode, string measure)
+        {
+            string sql = string.Format(@"Insert Impdata
+                 (Impdata_ID, Date_Consultation, Date_Naissance, PATIENTS_ID, Nom, Prenom, mss_Patient_BirthDATE, KEYCODE, Mesure)
+                  Values(@Id, @Datec, @Daten, @Patientid, @Nom, @Prenom, @Patientbd, @Keycode, @Measure)");
+
+            using (SqlCommand cmd = new SqlCommand(sql, Processing.dbConnect))
+            {
+                cmd.Parameters.AddWithValue("@Id", id);
+                cmd.Parameters.AddWithValue("@Datec", datec);
+                cmd.Parameters.AddWithValue("@Daten", daten);
+                cmd.Parameters.AddWithValue("@Patientid", patientid);
+                cmd.Parameters.AddWithValue("@Nom", nom);
+                cmd.Parameters.AddWithValue("@Prenom", prenom);
+                cmd.Parameters.AddWithValue("@Patientbd", patientbd);
+                cmd.Parameters.AddWithValue("@Keycode", keycode);
+                cmd.Parameters.AddWithValue("@Measure", measure);
+                cmd.ExecuteNonQuery();
+            }
+        }
+						 
+						 /*foreach (var ie in insetImpdata)
+                        {
+                            Console.WriteLine("{0}   {1}  {2}  {3}", ie.KEYCODE, ie.Nom, ie.Prenom, ie.Date_Naissance);
+                            /*rowsAffected = db.ExecuteCommand(@"insert IMPDATA (Impdata_ID, Date_Consultation, Date_Naissance, PATIENTS_ID, Nom, Prenom, 
+		                        mss_Patient_BirthDATE, KEYCODE, Mesure)
+		                        values({0}, {1}, {2}, {3}, {4}, {5}, {6}, {7}, {8})"
+                                , qId, ie.Date_Consultation, ie.Date_Naissance, ie.PATIENTS_ID, ie.Nom, ie.Prenom, 
+                                ie.mss_Patient_BirthDATE, ie.KEYCODE, ie.Mesure);
+                            DBControl dbc = new DBControl();
+                            dbc.InsertImpdata(ie.ImpdataId, ie.Date_Consultation,ie.Date_Naissance, ie.PATIENTS_ID, ie.Nom, ie.Prenom, ie.mss_Patient_BirthDATE, ie.KEYCODE, ie.Mesure);
+                        }*/

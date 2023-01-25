@@ -1,0 +1,36 @@
+            int nn = 0;
+
+            var qDict = (from xe in xdoc.Element("Message").Elements("Analyses").Elements("Item")
+                        where xe.Attribute("UpdateVersion").Value == "552"
+                        select new
+                        { Id = xe.Attribute("Id").Value, Label = xe.Attribute("Name").Value });
+
+            // foreach (var item in qDict)
+            //    Console.WriteLine("{0}  {1} ", item.ProfileId, item.Label);
+            var qD = (from pe in Profl
+                      join xe in xdoc.Element("Message").Elements("Analyses").Elements("Item")
+                      on pe.Id equals Convert.ToInt32(xe.Attribute("Id").Value)
+                     select new
+                     { Id = pe.Id, Label = pe.Label }).AsEnumerable();
+
+            var qProfl = (from xe in qDict
+                          let tprofile = from pe in qD
+                                         select pe.Id
+                          where tprofile.Contains(xe.Id) == true
+                          // where (int?)pe.ExternalId !=  Convert.ToInt32(xe.Attribute("Id").Value)
+                          // && Convert.ToInt32(xe.Attribute("Id").Value) >= 23546
+                          //           && Convert.ToInt32(xe.Attribute("Id").Value) <= 23560
+                          /*select new 
+                           {
+                               ProfileId = 1,
+                               OrgId = 11,
+                               ExternalId = xe.ProfileId,//Convert.ToInt32(xe.Attribute("Id").Value), //,  Convert.ToInt32(je.ExternalId)
+                               Code = xe.DirServId,//xe.Attribute("Code").Value,
+                               Label = xe.ServId//xe.Attribute("Name").Value,
+                           }*/
+                          select new { ProfileId = xe.ExternalId, ServId = xe.Label}
+
+                          ).AsEnumerable();
+
+            foreach (var item in qProfl)
+                Console.WriteLine("{0}  {1} ", item.ProfileId, item.ServId); //, item.ExternalId.ToString(), item.ProfileId, item.OrgId);

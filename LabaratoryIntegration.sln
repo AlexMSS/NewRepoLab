@@ -1,0 +1,31 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio 14
+VisualStudioVersion = 14.0.24720.0
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LabIntegration", "LabIntegration\LabIntegration.csproj", "{5929EC89-7955-4BC7-9419-24F7DBBAF10C}"
+	ProjectSection(ProjectDependencies) = postProject
+		{192B7C48-FAF7-41DD-BB49-65E5485FE896} = {192B7C48-FAF7-41DD-BB49-65E5485FE896}
+	EndProjectSection
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LabComm", "LabComm\LabComm.csproj", "{192B7C48-FAF7-41DD-BB49-65E5485FE896}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{5929EC89-7955-4BC7-9419-24F7DBBAF10C}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{5929EC89-7955-4BC7-9419-24F7DBBAF10C}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{5929EC89-7955-4BC7-9419-24F7DBBAF10C}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{5929EC89-7955-4BC7-9419-24F7DBBAF10C}.Release|Any CPU.Build.0 = Release|Any CPU
+		{192B7C48-FAF7-41DD-BB49-65E5485FE896}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{192B7C48-FAF7-41DD-BB49-65E5485FE896}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{192B7C48-FAF7-41DD-BB49-65E5485FE896}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{192B7C48-FAF7-41DD-BB49-65E5485FE896}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+EndGlobal

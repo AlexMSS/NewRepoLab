@@ -1,0 +1,97 @@
+       static string connectionString = GetSqlConnectionString();
+
+        
+        static string queueName = "SQLDependencyQueue";
+        public static void Initialization()
+        {
+            SqlDependency.Stop(connectionString);
+            SqlDependency.Start(connectionString);
+            SomeMethod();
+        }
+
+        public static void SomeMethod()
+        {
+            SqlDependency.Start(connectionString);
+            SqlConnection connection = new SqlConnection(connectionString);
+            connection.Open();
+            using (SqlCommand command = new SqlCommand(
+                "select BIO_CODE from dbo.PATDIREC",
+                connection))
+            {
+
+                // Create a dependency and associate it with the SqlCommand.
+                SqlDependency dependency = new SqlDependency(command);
+                
+                // Maintain the refence in a class member.
+
+                // Subscribe to the SqlDependency event.
+                dependency.OnChange += new
+                   OnChangeEventHandler(OnDependencyChange);
+
+                // Execute the command.
+                //using (SqlDataReader reader = command.ExecuteReader())
+                {
+                    Console.WriteLine("-----------------");
+                    command.ExecuteReader();
+                }
+            }
+        }
+
+        // Handler method
+        public static void OnDependencyChange(object sender,
+           SqlNotificationEventArgs args)
+        {
+            SqlNotificationInfo info = args.Info;
+            if (SqlNotificationInfo.Insert.Equals(info)
+                || SqlNotificationInfo.Update.Equals(info)
+                || SqlNotificationInfo.Delete.Equals(info))
+            {
+                Console.WriteLine("####################################");
+            }
+            Console.WriteLine("####################################");
+        }
+
+        void Termination()
+        {
+            // Release the dependency.
+            SqlDependency.Stop(connectionString, queueName);
+        }
+
+
+/*
+                public static void StartWatching()
+                {
+
+                    SqlDependency.Stop(connectionString);
+                    SqlDependency.Start(connectionString);
+                    ExecuteWatchingQuery();
+                }
+
+                private static void ExecuteWatchingQuery()
+                {
+                    using (SqlConnection connection = new SqlConnection(connectionString))
+                    {
+                        connection.Open();
+                        Console.WriteLine("Открыто подключение для слежения за изменениями в PATDIREC");
+                        using (var command = new SqlCommand(
+                           @"select [BIO_CODE] from [dbo].[PATDIREC]", connection))
+                        {
+                            var sqlDependency = new SqlDependency(command);
+                            sqlDependency.OnChange += new OnChangeEventHandler(OnDatabaseChange);
+                            command.ExecuteReader();
+                        }
+                    }
+                }
+
+                private static void OnDatabaseChange(object sender, SqlNotificationEventArgs args)
+                {
+                    SqlNotificationInfo info = args.Info;
+                    if (SqlNotificationInfo.Insert.Equals(info)
+                        || SqlNotificationInfo.Update.Equals(info)
+                        || SqlNotificationInfo.Delete.Equals(info))
+                    {
+                        Console.WriteLine("####################################");
+                    }
+                    ExecuteWatchingQuery();
+                }
+        */
