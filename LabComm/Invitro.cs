@@ -312,10 +312,12 @@ namespace LabComm
                 }
                 //*/
                 DBControl.InsertBiomatProfile(profileBiomat, Processing.Ini.OrgId);
-                /*DBControl.DeleteBiomatProfile(profileBiomat, Processing.Ini.OrgId);*/
+                DBControl.FindBiomatProfile(profileBiomat, Processing.Ini.OrgId);
+                DBControl.DeleteBiomatProfilelog(profileBiomat, Processing.Ini.OrgId);
+                DBControl.DeleteBiomatProfile(profileBiomat, Processing.Ini.OrgId);
                 DBControl.InsertAuxilaryProfile(auxProfiles, Processing.Ini.OrgId);
                 DBControl.UpdateFormType();
-                DBControl.UpdateFormTypelog();
+                /*DBControl.UpdateFormTypelog();*/
 
                 string GetValue(XElement xElement)
                 {

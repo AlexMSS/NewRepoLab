@@ -258,6 +258,8 @@ namespace LabComm
         public int LabBiotypeId { get; set; }
         [Column(Name = "MSS_PROFILES_ID", CanBeNull = true)]
         public int ProfileId { get; set; }
+        [Column(Name = "Flag", CanBeNull = true)]
+        public int Flag { get; set; }
     }
     // создание таблицы лога
     [Table(Name = "MSS_LOAD_DICT_LOGS")]
@@ -370,7 +372,18 @@ namespace LabComm
         public string BiomatCode;
         public string OptionSet = string.Empty;
         public string ProfileExtId;
+        public string Flag = string.Empty;
     }
+
+    public class ProfileBiomatlog
+    {
+        public string ProfileCode;
+        public string BiomatCode;
+        public string OptionSet = string.Empty;
+        public string ProfileExtId;
+        public string Change;
+    }
+
     public class Test
     {
         public string Label;
@@ -3545,7 +3558,7 @@ namespace LabComm
 
         public static void InsertBiomatProfile(List<ProfileBiomat> ProfileBiomats, int OrgId)
         {
-            Console.WriteLine("Вставка связи биоматериалов с профием");
+            Console.WriteLine("Вставка связи биоматериалов с профилем");
             DataContext db = new DataContext(Processing.sqlConnectionStr);
             foreach (var prb in ProfileBiomats)
             {
@@ -3566,13 +3579,9 @@ namespace LabComm
 	                                exec up_get_id 'MSS_PROFILES_BIOMATERIAL',1,@id out
                                     insert MSS_PROFILES_BIOMATERIAL (MSS_PROFILES_BIOMATERIAL_ID, MSS_PROFILES_ID, LAB_BIOTYPE_ID, OPTION_SET)
                                     values ( @id, @profile_id, @biomat_id, case when {3} <> '' then {3} else null end )
-                                end
-
-                                /* код лога при включении в БД */
-                                begin
-	                                exec up_get_id 'MSS_LOAD_DICT_LOGS',1,@id out
-                                    insert MSS_LOAD_DICT_LOGS (MSS_PROFILES_BIOMATERIAL_ID, MSS_PROFILES_ID, LAB_BIOTYPE_ID, Change)
-                                    values ( @id, @profile_id, @biomat_id, '1' )
+                                    exec up_get_id 'MSS_LOAD_DICT_LOGS',1,@id out
+                                    insert MSS_LOAD_DICT_LOGS (MSS_LOAD_DICT_LOGS_ID, MSS_PROFILES_ID, LAB_BIOTYPE_ID, OPTION_SET, Change)
+                                    values ( @id, @profile_id, @biomat_id, {3}, 'upload' )
                                 end
                              end
                         
@@ -3729,6 +3738,7 @@ namespace LabComm
 
         public static void UpdateFormType()
         {
+            Console.WriteLine("Test 3");
             DataContext db = new DataContext(Processing.sqlConnectionStr);
             int ok = db.ExecuteCommand(@"
                     update MSS_PROFILES_BIOMATERIAL set FORM_TYPE = ep.FORM_TYPE
@@ -3741,7 +3751,7 @@ namespace LabComm
             db.Dispose();
         }
 
-        public static void UpdateFormTypelog()
+        /*public static void UpdateFormTypelog()
         {
             DataContext db = new DataContext(Processing.sqlConnectionStr);
             int ok = db.ExecuteCommand(@"
@@ -3753,7 +3763,7 @@ namespace LabComm
                     where pb.FORM_TYPE is null
                     ");
             db.Dispose();
-        }
+        }*/
 
         public static void UpdateRequestCode(DataContext db, int RequestId, string RequestCode)
         {
@@ -3775,9 +3785,132 @@ namespace LabComm
                     ", RequestId, BarCode);
         }
 
-        
-        
-        
+        public static void FindBiomatProfile(List<ProfileBiomat> ProfileBiomats, int OrgId)
+        {
+            Console.WriteLine("Проверка соответствия связи биоматериалов с профилем");
+            DataContext db = new DataContext(Processing.sqlConnectionStr);
+            foreach (var prb in ProfileBiomats)
+            {
+                
+                int success = db.ExecuteCommand(@"
+                         declare @id int, @profile_id int, @biomat_id int
+                        if exists (select pb.MSS_PROFILES_BIOMATERIAL_ID 
+                            from MSS_PROFILES_BIOMATERIAL pb
+                            join MSS_PROFILES p on pb.MSS_PROFILES_ID = p.MSS_PROFILES_ID
+                            join LAB_BIOTYPE b on pb.LAB_BIOTYPE_ID = b.LAB_BIOTYPE_ID
+                            where b.CODE = {0} and p.EXTERNAL_ID = {4} and p.FM_ORG_ID = {2} and b.FM_ORG_ID = {2} and pb.OPTION_SET = {3}
+                                       )
+                            
+                                /*begin
+                                set @profile_id = (select top 1 MSS_PROFILES_ID from MSS_PROFILES where CODE = {1} and FM_ORG_ID = {2})
+                                set @biomat_id = (select top 1 LAB_BIOTYPE_ID from LAB_BIOTYPE where CODE = {0} and FM_ORG_ID = {2})
+                                if @profile_id is not null and @biomat_id is not null*/
+                                begin
+	                                exec up_get_id 'MSS_PROFILES_BIOMATERIAL',1,@id out
+                                    update MSS_PROFILES_BIOMATERIAL 
+                                    set Flag = 1
+                                    where MSS_PROFILES_BIOMATERIAL_ID = (select pb.MSS_PROFILES_BIOMATERIAL_ID 
+                            from MSS_PROFILES_BIOMATERIAL pb
+                            join MSS_PROFILES p on pb.MSS_PROFILES_ID = p.MSS_PROFILES_ID
+                            join LAB_BIOTYPE b on pb.LAB_BIOTYPE_ID = b.LAB_BIOTYPE_ID
+                            where Flag = 0 and b.CODE = {0} and p.EXTERNAL_ID = {4}  and p.FM_ORG_ID = {2} and b.FM_ORG_ID = {2} and pb.OPTION_SET = {3})
+                                    
+                                end
+                                
+            
+         
+            ", prb.BiomatCode, prb.ProfileCode, OrgId, prb.OptionSet, prb.ProfileExtId);
+}
+            db.Dispose();
+        }
+
+        public static void DeleteBiomatProfilelog(List<ProfileBiomat> ProfileBiomats, int OrgId)
+        {
+            Console.WriteLine("Удаление связи биоматериалов с профилем ЛОГ");
+            DataContext db = new DataContext(Processing.sqlConnectionStr);
+            foreach (var prb in ProfileBiomats)
+            {
+                /*Console.WriteLine("Тест 1");*/
+                int success = db.ExecuteCommand(@"
+                        declare @i int, @id int, @profile_id int, @biomat_id int, @OPTION_SET varchar(50), @Change varchar(50)
+                        set @id = 1
+                        while (@id<50000)
+                        begin
+                        set @OPTION_SET =  ( select pb.OPTION_SET                              								
+                        from MSS_PROFILES_BIOMATERIAL pb
+                        join MSS_PROFILES p on pb.MSS_PROFILES_ID = p.MSS_PROFILES_ID
+                        join LAB_BIOTYPE b on pb.LAB_BIOTYPE_ID = b.LAB_BIOTYPE_ID
+                        where Flag = 0 and p.FM_ORG_ID = 975 and b.FM_ORG_ID = 975 and MSS_PROFILES_BIOMATERIAL_ID=@id)
+
+                        set @profile_id =  ( select pb.MSS_PROFILES_ID                              								
+                        from MSS_PROFILES_BIOMATERIAL pb
+                        join MSS_PROFILES p on pb.MSS_PROFILES_ID = p.MSS_PROFILES_ID
+                        join LAB_BIOTYPE b on pb.LAB_BIOTYPE_ID = b.LAB_BIOTYPE_ID
+                        where Flag = 0 and p.FM_ORG_ID = 975 and b.FM_ORG_ID = 975 and MSS_PROFILES_BIOMATERIAL_ID=@id)
+
+                        set @biomat_id =  ( select pb.LAB_BIOTYPE_ID                              								
+                        from MSS_PROFILES_BIOMATERIAL pb
+                        join MSS_PROFILES p on pb.MSS_PROFILES_ID = p.MSS_PROFILES_ID
+                        join LAB_BIOTYPE b on pb.LAB_BIOTYPE_ID = b.LAB_BIOTYPE_ID
+                        where Flag = 0 and p.FM_ORG_ID = 975 and b.FM_ORG_ID = 975 and MSS_PROFILES_BIOMATERIAL_ID=@id)
+
+                        set @Change =  ( select Change                              								
+                        from MSS_LOAD_DICT_LOGS
+                        where MSS_PROFILES_ID = @profile_id and LAB_BIOTYPE_ID = @biomat_id and OPTION_SET = @OPTION_SET and Change='delete')
+
+                        if @profile_id is not null and @biomat_id is not null and @OPTION_SET is not null and @Change is null
+                        begin
+	                        insert MSS_LOAD_DICT_LOGS (MSS_LOAD_DICT_LOGS_ID, MSS_PROFILES_ID, LAB_BIOTYPE_ID, OPTION_SET, Change)
+                                                            values ( @id, @profile_id, @biomat_id, @OPTION_SET, 'delete' )
+                        end
+
+                        set @id = @id + 1
+                        end
+                             
+                        
+                    ", prb.BiomatCode, prb.ProfileCode, OrgId, prb.OptionSet, prb.ProfileExtId);
+
+            }
+
+            db.Dispose();
+        }
+
+
+        public static void DeleteBiomatProfile(List<ProfileBiomat> ProfileBiomats, int OrgId)
+        {
+            Console.WriteLine("Удаление связи биоматериалов с профилем");
+            DataContext db = new DataContext(Processing.sqlConnectionStr);
+            foreach (var prb in ProfileBiomats)
+            {
+                /*Console.WriteLine("Тест 1");*/
+                int success = db.ExecuteCommand(@"
+                        declare @id int, @profile_id int, @biomat_id int
+                        if exists (select pb.MSS_PROFILES_BIOMATERIAL_ID 
+                            from MSS_PROFILES_BIOMATERIAL pb
+                            join MSS_PROFILES p on pb.MSS_PROFILES_ID = p.MSS_PROFILES_ID
+                            join LAB_BIOTYPE b on pb.LAB_BIOTYPE_ID = b.LAB_BIOTYPE_ID
+                            where Flag = 0 and p.FM_ORG_ID = 975 and b.FM_ORG_ID = 975)
+                            
+                            
+                            begin
+	                            /*exec up_get_id 'MSS_PROFILES_BIOMATERIAL',1,@id out*/
+                                delete from MSS_PROFILES_BIOMATERIAL 
+                                where MSS_PROFILES_BIOMATERIAL_ID = (select top 1 pb.MSS_PROFILES_BIOMATERIAL_ID 
+                                    from MSS_PROFILES_BIOMATERIAL pb
+                                    join MSS_PROFILES p on pb.MSS_PROFILES_ID = p.MSS_PROFILES_ID
+                                    join LAB_BIOTYPE b on pb.LAB_BIOTYPE_ID = b.LAB_BIOTYPE_ID
+                                    where Flag = 0 and p.FM_ORG_ID = 975 and b.FM_ORG_ID = 975)
+                                
+                                
+                            end
+                             
+                        
+                    ", prb.BiomatCode, prb.ProfileCode, OrgId, prb.OptionSet, prb.ProfileExtId);
+
+            }
+
+            db.Dispose();
+        }
 
     }
 }
